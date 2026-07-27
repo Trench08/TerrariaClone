@@ -17,7 +17,13 @@ endif ()
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build Raylib as static libraries" FORCE)
 
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build Raylib as static libraries" FORCE)
+
 project(TerrariaClone)
+
+add_subdirectory(dependencies/raylib-5.0)
+add_subdirectory(dependencies/imgui-docking)
+add_subdirectory(dependencies/rlimgui)
 
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
@@ -54,3 +60,8 @@ elseif (APPLE OR UNIX)
         target_link_options("${CMAKE_PROJECT_NAME}" PRIVATE -s)
     endif ()
 endif ()
+
+target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/gameLayer")
+target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/platform")
+
+target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE raylib_static imgui rlimgui)

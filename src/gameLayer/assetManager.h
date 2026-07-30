@@ -5,10 +5,11 @@
 #include "raylib.h"
 
 
-class assetManager
+struct AssetManager
 {
+    Texture2D dirt = {};
     Texture2D Atlas = {};
 
-    void LoadAll();
+    void loadAll();
 };
 

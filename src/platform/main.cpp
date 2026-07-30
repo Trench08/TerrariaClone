@@ -49,13 +49,6 @@ int main()
             return 0;
         }
 
-        ImGui::Begin("Test");
-
-        ImGui::Text("Hello");
-        ImGui::Button("Test 2");
-
-        ImGui::End();
-
         rlImGuiEnd();
 
         EndDrawing();

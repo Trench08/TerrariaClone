@@ -4,7 +4,8 @@
 
 #include "assetManager.h"
 
-void assetManager::LoadAll()
+void AssetManager::loadAll()
 {
+    dirt = LoadTexture(RESOURCES_PATH "/dirt.png");
     Atlas = LoadTexture(RESOURCES_PATH "/textures.png");
 }

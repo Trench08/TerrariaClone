@@ -6,11 +6,15 @@
 #include "asserts.h"
 #include "assetManager.h"
 #include "gameMap.h"
+#include "helpers.h"
+#include "imgui.h"
+#include "raymath.h"
 
 
 struct GameData
 {
     GameMap gameMap;
+    Camera2D camera;
 
 }gameData;
 
@@ -22,11 +26,20 @@ bool InitGame()
 
     gameData.gameMap.create(30, 10);
 
+    for (Block &b : gameData.gameMap.mapData )
+    {
+        b.type = Block::dirt;
+    }
+
     gameData.gameMap.getBlocUnsafe(0,0).type = Block::dirt;
-    gameData.gameMap.getBlocUnsafe(1,1).type = Block::dirt;
-    gameData.gameMap.getBlocUnsafe(2,2).type = Block::dirt;
-    gameData.gameMap.getBlocUnsafe(3,3).type = Block::dirt;
-    gameData.gameMap.getBlocUnsafe(4,4).type = Block::dirt;
+    gameData.gameMap.getBlocUnsafe(1,1).type = Block::grasBlock;
+    gameData.gameMap.getBlocUnsafe(2,2).type = Block::gold;
+    gameData.gameMap.getBlocUnsafe(3,3).type = Block::glass;
+    gameData.gameMap.getBlocUnsafe(4,4).type = Block::bonePlatform;
+
+    gameData.camera.target = {0,0};
+    gameData.camera.rotation = 0.0f;
+    gameData.camera.zoom = 100.0f;
 
     return true;
 }
@@ -37,23 +50,66 @@ bool UpdateGame()
     float deltaTime = GetFrameTime();
     if (deltaTime < 1.f / 6) { deltaTime = 1 / 5.f; }
 
+    gameData.camera.offset = {GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f};
+
     ClearBackground({75, 75, 150, 255});
 
-    for (int y = 0; y < gameData.gameMap.h; y++)
-        for (int x = 0; x < gameData.gameMap.w; x++)
+    if (IsKeyDown(KEY_A)) gameData.camera.target.x -= 1.f * deltaTime;
+    if (IsKeyDown(KEY_D)) gameData.camera.target.x += 1.f * deltaTime;
+    if (IsKeyDown(KEY_W)) gameData.camera.target.y -= 1.f * deltaTime;
+    if (IsKeyDown(KEY_S)) gameData.camera.target.y += 1.f * deltaTime;
+
+    ImGui::Begin("Block Selector");
+
+    static int blockType = 0;
+    ImGui::InputInt("Block Type", &blockType);
+
+    ImGui::End();
+
+    Vector2 worldPos = GetScreenToWorld2D(GetMousePosition(), gameData.camera);
+    int blockX = (int)floor(worldPos.x);
+    int blockY = (int)floor(worldPos.y);
+
+    if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+        if (auto b = gameData.gameMap.getBlocSafe(blockX, blockY))
+        {
+            b->type = blockType;
+        }
+
+    if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON))
+        if (auto b = gameData.gameMap.getBlocSafe(blockX, blockY))
+        {
+            *b = {};
+        }
+
+    BeginMode2D(gameData.camera);
+
+    Vector2 topLeftView = GetScreenToWorld2D({0, 0}, gameData.camera);
+    Vector2 bottomRightView = GetScreenToWorld2D({(float)GetScreenWidth(), (float)GetScreenHeight()}, gameData.camera);
+
+    int startXView = (int)floorf(topLeftView.x - 1);
+    int endXView = (int)ceilf(bottomRightView.x + 1);
+    int startYView = (int)floorf(topLeftView.y - 1);
+    int endYView = (int)ceilf(bottomRightView.y + 1);
+
+    startXView = Clamp(startXView, 0, gameData.gameMap.w - 1);
+    endXView = Clamp(endXView, 0, gameData.gameMap.w - 1);
+
+    startYView = Clamp(startYView, 0, gameData.gameMap.h - 1);
+    endYView = Clamp(endYView, 0, gameData.gameMap.h - 1);
+
+
+    for (int y = startYView; y <= endYView; y++)
+        for (int x = startXView; x <= endXView; x++)
         {
             auto &b = gameData.gameMap.getBlocUnsafe(x,y);
 
             if (b.type != Block::air)
             {
-                float size = 32;
-                float posX = x * size;
-                float posY = y * size;
-
                 DrawTexturePro(
-                    assetManager.dirt,
-                    Rectangle{0.f, 0.f, 32.f, 32.f},
-                    {posX, posY, size, size},
+                    assetManager.textures,
+                    getTextureAtlas(b.type, 0, 32, 32),
+                    {(float)x, (float)y, 1, 1},
                     {0, 0},
                     0.0f,
                     WHITE
@@ -61,8 +117,22 @@ bool UpdateGame()
             }
         }
 
+    DrawTexturePro(
+        assetManager.frame,
+        getTextureAtlas(0, 0, 32, 32),
+        {(float)blockX, (float)blockY, 1, 1},
+        {0, 0},
+        0.0f,
+        WHITE
+        );
 
 
+
+
+    EndMode2D();
+
+
+    DrawFPS(10, 10);
     return true;
 }
 

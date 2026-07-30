@@ -14,7 +14,7 @@ int main()
 #endif
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitWindow(800, 450, "TerrariaClone");
+    InitWindow(1600, 900, "TerrariaClone");
     SetExitKey(KEY_NULL);
     SetTargetFPS(240);
 
@@ -48,6 +48,8 @@ int main()
         {
             return 0;
         }
+
+
 
         rlImGuiEnd();
 

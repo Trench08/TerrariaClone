@@ -34,5 +34,4 @@ bool UpdateGame()
 
 void CloseGame()
 {
-
 }

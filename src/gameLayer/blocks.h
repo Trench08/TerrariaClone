@@ -11,7 +11,7 @@ struct Block
     {
         air = 0,
         dirt,
-        grasBlock,
+        grassBlock,
         stone,
         grass,
         sand,

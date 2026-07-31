@@ -3,12 +3,18 @@
 //
 #include <raylib.h>
 #include "gameMain.h"
+
+#include <iostream>
+#include <random>
+
 #include "asserts.h"
 #include "assetManager.h"
 #include "gameMap.h"
 #include "helpers.h"
 #include "imgui.h"
+#include "randomStuff.h"
 #include "raymath.h"
+#include "worldGenerator.h"
 
 
 struct GameData
@@ -24,18 +30,7 @@ bool InitGame()
 {
     assetManager.loadAll();
 
-    gameData.gameMap.create(30, 10);
-
-    for (Block &b : gameData.gameMap.mapData )
-    {
-        b.type = Block::dirt;
-    }
-
-    gameData.gameMap.getBlocUnsafe(0,0).type = Block::dirt;
-    gameData.gameMap.getBlocUnsafe(1,1).type = Block::grasBlock;
-    gameData.gameMap.getBlocUnsafe(2,2).type = Block::gold;
-    gameData.gameMap.getBlocUnsafe(3,3).type = Block::glass;
-    gameData.gameMap.getBlocUnsafe(4,4).type = Block::bonePlatform;
+    generateWorld(gameData.gameMap, 144);
 
     gameData.camera.target = {0,0};
     gameData.camera.rotation = 0.0f;
@@ -48,16 +43,17 @@ bool UpdateGame()
 {
 
     float deltaTime = GetFrameTime();
-    if (deltaTime < 1.f / 6) { deltaTime = 1 / 5.f; }
+    if (deltaTime > 1.f / 6) { deltaTime = 1 / 5.f; }
 
     gameData.camera.offset = {GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f};
 
     ClearBackground({75, 75, 150, 255});
 
-    if (IsKeyDown(KEY_A)) gameData.camera.target.x -= 1.f * deltaTime;
-    if (IsKeyDown(KEY_D)) gameData.camera.target.x += 1.f * deltaTime;
-    if (IsKeyDown(KEY_W)) gameData.camera.target.y -= 1.f * deltaTime;
-    if (IsKeyDown(KEY_S)) gameData.camera.target.y += 1.f * deltaTime;
+    static float CAMERA_SPEED = 2.0f;
+    if (IsKeyDown(KEY_A)) gameData.camera.target.x -= CAMERA_SPEED * deltaTime;
+    if (IsKeyDown(KEY_D)) gameData.camera.target.x += CAMERA_SPEED * deltaTime;
+    if (IsKeyDown(KEY_W)) gameData.camera.target.y -= CAMERA_SPEED * deltaTime;
+    if (IsKeyDown(KEY_S)) gameData.camera.target.y += CAMERA_SPEED * deltaTime;
 
     ImGui::Begin("Block Selector");
 
@@ -71,10 +67,11 @@ bool UpdateGame()
     int blockY = (int)floor(worldPos.y);
 
     if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
-        if (auto b = gameData.gameMap.getBlocSafe(blockX, blockY))
-        {
-            b->type = blockType;
-        }
+        if (blockType != 0)
+            if (auto b = gameData.gameMap.getBlocSafe(blockX, blockY))
+            {
+                b->type = blockType;
+            }
 
     if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON))
         if (auto b = gameData.gameMap.getBlocSafe(blockX, blockY))
@@ -131,6 +128,12 @@ bool UpdateGame()
 
     EndMode2D();
 
+    ImGui::Begin("Game Controlls");
+
+    ImGui::SliderFloat("Camera Zoom", &gameData.camera.zoom, 10, 150);
+    ImGui::SliderFloat("Camera Speed", &CAMERA_SPEED, 1, 30);
+
+    ImGui::End();
 
     DrawFPS(10, 10);
     return true;
